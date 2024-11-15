@@ -31,20 +31,12 @@ resulting archive.
 
 =head2 new
 
+ my $w = Archive::Libarchive::Compress->new(%args);
+
+Exactly one of C<filename> and C<memory> are required.  All other
+arguments are optional.
+
 =over 4
-
-=item filename
-
-The name of the archive filename to create.
-
-=item memory
-
-Scalar reference which will be used as a buffer to write the archive
-to memory.  This scalar does not have to be pre-allocated, so this
-will work:
-
- my $out = '';
- my $w = Archive::Libarchive::Compress->new( memory => \$out );
 
 =item entry
 
@@ -63,6 +55,19 @@ the entry will not be written to the archive.
 You may also modify the entry, before it gets written.  This can
 be useful for modifying stored file properties like the owner,
 group or permissions that you may not want in the archive.
+
+=item filename
+
+The name of the archive filename to create.
+
+=item memory
+
+Scalar reference which will be used as a buffer to write the archive
+to memory.  This scalar does not have to be pre-allocated, so this
+will work:
+
+ my $out = '';
+ my $w = Archive::Libarchive::Compress->new( memory => \$out );
 
 =back
 
