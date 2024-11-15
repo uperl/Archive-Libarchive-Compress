@@ -11,11 +11,21 @@ package Archive::Libarchive::Compress {
   use Archive::Libarchive 0.04 qw( ARCHIVE_OK ARCHIVE_WARN );
   use FFI::C::Stat;
 
-  # ABSTRACT: Recursively compress a directory (using libarchive)
+  # ABSTRACT: Recursively archive a directory (using libarchive)
 
 =head1 SYNOPSIS
 
+ use Archive::Libarchive::Compress;
+
+ my $w = Archive::Libarchive::Compress->new( filename => 'foo.tar' );
+ $w->compress( from => '.' );
+
 =head1 DESCRIPTION
+
+This module recursively archives a directory to either a file or
+to memory.  This module does not store directory structure, just
+the files, so an empty directory will not be represented in the
+resulting archive.
 
 =head1 CONSTRUCTOR
 
@@ -25,9 +35,34 @@ package Archive::Libarchive::Compress {
 
 =item filename
 
+The name of the archive filename to create.
+
 =item memory
 
+Scalar reference which will be used as a buffer to write the archive
+to memory.  This scalar does not have to be pre-allocated, so this
+will work:
+
+ my $out = '';
+ my $w = Archive::Libarchive::Compress->new( memory => \$out );
+
 =item entry
+
+Callback function called for each entry before it is written to
+the archive.  If this callback returns a false value, then
+the entry will not be written to the archive.
+
+ my $w = Archive::Libarchive::Compress->new(
+   filename => 'foo.tar',
+   entry => sub ($e) {
+     # skip "hidden" files
+     return $e->pathname !~ /^\./;
+   },
+ )
+
+You may also modify the entry, before it gets written.  This can
+be useful for modifying stored file properties like the owner,
+group or permissions that you may not want in the archive.
 
 =back
 
@@ -62,7 +97,16 @@ package Archive::Libarchive::Compress {
 
 =head2 filename
 
+ my $filename = $w->filename;
+
+Returns the Archive filename.
+
 =head2 from
+
+ my $from = $w->from;
+
+Returns the directory that was archived.  If L</compress> hasn't been called yet,
+then it will return C<undef>.
 
 =cut
 
@@ -127,6 +171,12 @@ package Archive::Libarchive::Compress {
 
 =head2 compress
 
+ $w->compress( from => $dir );
+ $w->compress;
+
+Recursively archives the directory.  If C<$dir> is not provided, then
+the current directory will be used.
+
 =cut
 
   sub compress ($self, %options) {
@@ -146,4 +196,3 @@ package Archive::Libarchive::Compress {
 }
 
 1;
-
