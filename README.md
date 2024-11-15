@@ -32,8 +32,9 @@ arguments are optional.
 - entry
 
     Callback function called for each entry before it is written to
-    the archive.  If this callback returns a false value, then
-    the entry will not be written to the archive.
+    the archive.  The entry is passed in as an instance of
+    [Archive::Libarchive::Entry](https://metacpan.org/pod/Archive::Libarchive::Entry).  If this callback returns a false
+    value, then the entry will not be written to the archive.
 
     ```perl
     my $w = Archive::Libarchive::Compress->new(
@@ -63,6 +64,27 @@ arguments are optional.
     my $out = '';
     my $w = Archive::Libarchive::Compress->new( memory => \$out );
     ```
+
+- prep
+
+    Callback function called before the archive has been opened.
+    An instance of [Archive::Libarchive::ArchiveWrite](https://metacpan.org/pod/Archive::Libarchive::ArchiveWrite) will be passed
+    in.  This is useful for specifying a format for the archive.
+    If not provided, then pax restricted format will be used.
+    (This is uncompressed and widely supported).  If you wanted
+    to for example use GNU tar format compressed with bzip2:
+
+    ```perl
+    my $w = Archive::Libarchive::Compress->new(
+      filename => 'foo.tar.bz2',
+      prep => sub ($archive) {
+        $archive->set_format_gnutar;
+        $archive->add_filter_bzip2;
+      },
+    );
+    ```
+
+    See [Archive::Libarchive::ArchiveWrite](https://metacpan.org/pod/Archive::Libarchive::ArchiveWrite) for more details.
 
 # METHODS
 

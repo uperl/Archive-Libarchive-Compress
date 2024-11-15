@@ -41,8 +41,9 @@ arguments are optional.
 =item entry
 
 Callback function called for each entry before it is written to
-the archive.  If this callback returns a false value, then
-the entry will not be written to the archive.
+the archive.  The entry is passed in as an instance of
+L<Archive::Libarchive::Entry>.  If this callback returns a false
+value, then the entry will not be written to the archive.
 
  my $w = Archive::Libarchive::Compress->new(
    filename => 'foo.tar',
@@ -69,6 +70,25 @@ will work:
  my $out = '';
  my $w = Archive::Libarchive::Compress->new( memory => \$out );
 
+=item prep
+
+Callback function called before the archive has been opened.
+An instance of L<Archive::Libarchive::ArchiveWrite> will be passed
+in.  This is useful for specifying a format for the archive.
+If not provided, then pax restricted format will be used.
+(This is uncompressed and widely supported).  If you wanted
+to for example use GNU tar format compressed with bzip2:
+
+ my $w = Archive::Libarchive::Compress->new(
+   filename => 'foo.tar.bz2',
+   prep => sub ($archive) {
+     $archive->set_format_gnutar;
+     $archive->add_filter_bzip2;
+   },
+ );
+
+See L<Archive::Libarchive::ArchiveWrite> for more details.
+
 =back
 
 =cut
@@ -90,6 +110,7 @@ will work:
         filename   => delete $options{filename},
         entry      => delete($options{entry}) // sub ($e) { return 1 },
         memory     => delete $options{memory},
+        prep       => delete($options{prep}) // sub ($ar) { $ar->set_format_pax_restricted },
       }, $class;
 
       Carp::croak("Illegal options: @{[ sort keys %options ]}")
@@ -122,7 +143,7 @@ then it will return C<undef>.
     my $w = Archive::Libarchive::ArchiveWrite->new;
     my $e = Archive::Libarchive::Entry->new;
 
-    $w->set_format_pax_restricted;
+    $self->{prep}->($w);
 
     my $ret;
 

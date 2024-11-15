@@ -7,6 +7,8 @@ pod_spelling_system:
   # intentionally
   stopwords:
     - libarchive
+    - bzip
+    - pax
 
 pod_coverage:
   skip: 0
