@@ -13,6 +13,7 @@ $modules{$_} = $_ for qw(
   Archive::Libarchive
   Archive::Libarchive::Peek
   ExtUtils::MakeMaker
+  FFI::C::Stat
   File::chdir
   Path::Tiny
   Ref::Util
