@@ -9,6 +9,7 @@ package Archive::Libarchive::Compress {
   use File::chdir;
   use Ref::Util qw( is_ref is_plain_scalarref is_plain_coderef );
   use Archive::Libarchive 0.04 qw( ARCHIVE_OK ARCHIVE_WARN );
+  use FFI::C::Stat;
 
   # ABSTRACT: Recursively compress a directory (using libarchive)
 
@@ -97,13 +98,30 @@ package Archive::Libarchive::Compress {
       foreach my $child (sort { $a->basename cmp $b->basename } $path->children) {
         $self->_iterate($w, $e, $child);
       }
-    } elsif($self->{entry}->($e)) {
+    } elsif(-f $path) {
+      $e->clear;
       $e->set_pathname("$path");
       $e->set_filetype('reg');
-      $e->set_perm( oct('0644') );
-      $e->set_size( -s "$path" );
-      my $ret = $w->write_header($e);
-      $ret = $w->write_data(\$path->slurp_raw);
+      my $stat = FFI::C::Stat->new("$path");
+      $e->copy_stat($stat);
+
+      if($self->{entry}->($e)) {
+        my $ret = $w->write_header($e);
+
+        if($ret == ARCHIVE_WARN) {
+          Carp::carp($w->error_string);
+        } elsif($ret < ARCHIVE_WARN) {
+          Carp::croak($w->error_string);
+        }
+
+        $ret = $w->write_data(\$path->slurp_raw);
+
+        if($ret == ARCHIVE_WARN) {
+          Carp::carp($w->error_string);
+        } elsif($ret < ARCHIVE_WARN) {
+          Carp::croak($w->error_string);
+        }
+      }
     }
   }
 
